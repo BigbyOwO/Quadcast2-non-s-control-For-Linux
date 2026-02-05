@@ -7,6 +7,7 @@ U must run this in your terminal to give access to the normal user for quadcast2
 Paste this in it : 
 `SUBSYSTEM=="usb", ATTR{idVendor}=="03f0", ATTR{idProduct}=="09af", MODE="0666"`
 Then press ctrl+x then y to save it and enter to exit 
+
 sudo ``udevadm control --reload-rules`` to reload rules and then ``sudo udevadm trigger`` to apply 
 
 to make sure ur id is the one i have use `lsusb` its called HP, Inc HyperX QuadCast 2 Controller also to see the device number
