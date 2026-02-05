@@ -4,8 +4,9 @@ import threading
 import time
 import numpy as np
 from PyQt6.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QSlider, QComboBox, QSystemTrayIcon, QMenu, QSpacerItem, QSizePolicy
+    QApplication, QWidget, QVBoxLayout, QLabel,
+    QPushButton, QSlider, QComboBox, QSystemTrayIcon,
+    QMenu, QSpacerItem, QSizePolicy
 )
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
@@ -68,14 +69,14 @@ def usb_loop():
 
                 t = time.time()
                 if led_effect == "blink":
-                    state = int(t*2)%2
+                    state = int(t * 2) % 2
                     lower *= state
                     upper *= state
                 elif led_effect == "wave":
                     wave_phase += 0.05 * wave_speed
-                    factor = (np.sin(wave_phase)+1)/2
-                    lower = int(lower*factor)
-                    upper = int(upper*factor)
+                    factor = (np.sin(wave_phase) + 1) / 2
+                    lower = int(lower * factor)
+                    upper = int(upper * factor)
 
             cmd = bytearray(64)
             cmd[0] = 0x81
@@ -92,6 +93,7 @@ def usb_loop():
 
             usb.util.release_interface(dev, INTERFACE)
             time.sleep(0.05)
+
         except usb.core.USBError:
             time.sleep(0.5)
 
@@ -103,88 +105,91 @@ class QuadCastApp(QWidget):
         self.setFixedSize(500, 400)
         self.init_ui()
 
-        # Start USB thread
         threading.Thread(target=usb_loop, daemon=True).start()
 
-        # Create system tray
-        self.tray = QSystemTrayIcon(QIcon(os.path.join(os.path.dirname(__file__), "icons/mic.svg")))
+        # System tray
+        icon_path = os.path.join(os.path.dirname(__file__), "icons/mic.svg")
+        self.tray = QSystemTrayIcon(QIcon(icon_path), self)
         self.tray.setToolTip("QuadCast 2 Control")
+
         menu = QMenu()
         open_action = menu.addAction("Open")
         quit_action = menu.addAction("Quit")
+
         open_action.triggered.connect(self.show_window)
         quit_action.triggered.connect(self.quit_app)
+
         self.tray.setContextMenu(menu)
         self.tray.show()
-        self.tray.activated.connect(lambda reason: self.show_window() if reason == QSystemTrayIcon.ActivationReason.Trigger else None)
+
+        self.tray.activated.connect(
+            lambda reason: self.show_window()
+            if reason == QSystemTrayIcon.ActivationReason.Trigger
+            else None
+        )
 
     def init_ui(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(15)
-        main_layout.setContentsMargins(20,20,20,20)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
 
-        # Brightness
-        main_layout.addWidget(QLabel("Brightness"))
+        layout.addWidget(QLabel("Brightness"))
         self.brightness_slider = QSlider(Qt.Orientation.Horizontal)
-        self.brightness_slider.setRange(0,100)
+        self.brightness_slider.setRange(0, 100)
         self.brightness_slider.setValue(10)
         self.brightness_slider.valueChanged.connect(self.change_brightness)
-        main_layout.addWidget(self.brightness_slider)
+        layout.addWidget(self.brightness_slider)
 
-        # LED Mode
-        main_layout.addWidget(QLabel("LED Mode"))
+        layout.addWidget(QLabel("LED Mode"))
         self.mode_combo = QComboBox()
-        self.mode_combo.addItems(["bottom","top","both"])
+        self.mode_combo.addItems(["bottom", "top", "both"])
         self.mode_combo.currentTextChanged.connect(self.change_mode)
-        main_layout.addWidget(self.mode_combo)
+        layout.addWidget(self.mode_combo)
 
-        # LED Effect
-        main_layout.addWidget(QLabel("LED Effect"))
+        layout.addWidget(QLabel("LED Effect"))
         self.effect_combo = QComboBox()
-        self.effect_combo.addItems(["static","blink","wave"])
+        self.effect_combo.addItems(["static", "blink", "wave"])
         self.effect_combo.currentTextChanged.connect(self.change_effect)
-        main_layout.addWidget(self.effect_combo)
+        layout.addWidget(self.effect_combo)
 
-        # Wave speed
-        main_layout.addWidget(QLabel("Wave Speed"))
+        layout.addWidget(QLabel("Wave Speed"))
         self.wave_slider = QSlider(Qt.Orientation.Horizontal)
-        self.wave_slider.setRange(1,50)
+        self.wave_slider.setRange(1, 50)
         self.wave_slider.setValue(10)
         self.wave_slider.valueChanged.connect(self.change_wave)
-        main_layout.addWidget(self.wave_slider)
+        layout.addWidget(self.wave_slider)
 
-        # LED ON/OFF
         self.toggle_btn = QPushButton("LED ON")
         self.toggle_btn.setCheckable(True)
         self.toggle_btn.setChecked(True)
         self.toggle_btn.clicked.connect(self.toggle_led)
-        main_layout.addWidget(self.toggle_btn)
+        layout.addWidget(self.toggle_btn)
 
-        main_layout.addItem(QSpacerItem(10,10,QSizePolicy.Policy.Expanding,QSizePolicy.Policy.Expanding))
+        layout.addItem(QSpacerItem(10, 10, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding))
 
     # ---------------- CALLBACKS ----------------
-    def change_brightness(self,value):
+    def change_brightness(self, value):
         global brightness_raw
-        brightness_raw = int(value*242/100)
+        brightness_raw = int(value * 242 / 100)
 
-    def change_mode(self,value):
+    def change_mode(self, value):
         global led_mode
         led_mode = value
 
-    def change_effect(self,value):
+    def change_effect(self, value):
         global led_effect
         led_effect = value
 
-    def change_wave(self,value):
+    def change_wave(self, value):
         global wave_speed
-        wave_speed = value/10
+        wave_speed = value / 10
 
-    def toggle_led(self,checked):
+    def toggle_led(self, checked):
         global led_enabled
         led_enabled = checked
         self.toggle_btn.setText("LED ON" if checked else "LED OFF")
 
-    # ---------------- TRAY FUNCTIONS ----------------
+    # ---------------- TRAY ----------------
     def show_window(self):
         self.show()
         self.activateWindow()
@@ -196,18 +201,23 @@ class QuadCastApp(QWidget):
         self.tray.hide()
         QApplication.quit()
 
-    # Minimize to tray on close
     def closeEvent(self, event):
         event.ignore()
         self.hide()
-        self.tray.showMessage("QuadCast 2 Control","App minimized to tray","Information",2000)
+        self.tray.showMessage(
+            "QuadCast 2 Control",
+            "Running in system tray",
+            QSystemTrayIcon.MessageIcon.Information,
+            2000
+        )
 
 # ---------------- MAIN ----------------
 def main():
     app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)  # 🔥 THIS FIXES YOUR ISSUE
     win = QuadCastApp()
     win.show()
     sys.exit(app.exec())
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
