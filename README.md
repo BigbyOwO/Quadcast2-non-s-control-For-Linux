@@ -7,10 +7,11 @@ U must run this in your terminal to give access to the normal user for quadcast2
 Paste this in it : 
 `SUBSYSTEM=="usb", ATTR{idVendor}=="03f0", ATTR{idProduct}=="09af", MODE="0666"`
 Then press ctrl+x then y to save it and enter to exit 
+sudo ``udevadm control --reload-rules`` to reload rules and then ``sudo udevadm trigger`` to apply 
 
-to check it after use this ````ls -l /dev/bus/usb/001/049```` it should show crw-rw-rw- 
+to make sure ur id is the one i have use `lsusb` its called HP, Inc HyperX QuadCast 2 Controller also to see the device number
 
-to make sure ur id is the one i have use `lsusb` its called HP, Inc HyperX QuadCast 2 Controller
+to check it after use this ````ls -l /dev/bus/usb/001/"your device number"```` it should show crw-rw-rw- 
 
 after that download the appimage and it should run u can use gear lever to add it to the app menu or whatever works 
 
